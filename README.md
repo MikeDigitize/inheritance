@@ -207,7 +207,7 @@ var h1 = new DomElement('h1');
 
 ```
 
-So now with a bit of internal testing of arguments I have a series of functions that can be composed as part of a base class or can be used on their own. But I'm still having to use the `new` keyword to instantiate an instance. I'll try the same thing again using `Object.create`.
+So now with a bit of internal testing of arguments I have a series of functions that can be composed as part of a base class or can be used on their own. `DomElement` is not exactly a particularly great example of a base class but it provides the element that the other functions can act upon so it's ok I guess. But I'm still having to use the `new` keyword to instantiate an instance. I'll try the same thing again using `Object.create`.
 
 ```javascript
 
@@ -216,7 +216,7 @@ So now with a bit of internal testing of arguments I have a series of functions 
 var DomTool = function(element) {
 	return Object.create(DomElement.prototype, {
 		elements : {
-			  writable: true, 
+			writable: true, 
 		  	configurable: true, 
 		  	value: Array.from(document.querySelectorAll(element))
 		},
