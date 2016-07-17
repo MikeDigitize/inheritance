@@ -170,13 +170,13 @@ function DomElement(selector) {
 // onclick-class.js
 
 function addClick(elements, callback) {
-    if(!elements) {
-      elements = this.elements;
-    }
-    if(!Array.isArray(elements)) {
-      elements = [elements];
-    }
-	  elements.forEach(element => element.addEventListener('click', callback));
+  if(!elements) {
+    elements = this.elements;
+  }
+  if(!Array.isArray(elements)) {
+    elements = [elements];
+  }
+  elements.forEach(element => element.addEventListener('click', callback));
 }
 
 
@@ -189,7 +189,7 @@ function addStyle(elements, style) {
   if(!Array.isArray(elements)) {
     elements = [elements];
   }
-	var key = Object.keys(style)[0];
+  var key = Object.keys(style)[0];
   elements.forEach(element => element.style[key] = style[key]);
 }
 
@@ -224,7 +224,7 @@ var DomTool = function(element) {
 		  	writable: false, 
 		  	configurable: true, 
 		  	value: function(callback) {
-			    onClick.call(this, null, callback);
+			    addClick.call(this, null, callback);
 			}
 		},
 	  	addStyle: {
@@ -243,6 +243,10 @@ var h1 = DomTool('h1');
 
 So now I've eliminated the need to use `new` but there's a fair amount of setup required in our custom.js file to compose the functions together. And I'm not using inheritance per se I've created a factory that spits out an object. The instance inherits from DomElement not from DomTool. 
 
-This is one way to do it but it's not the most ideal and it lacks sophistication. Forget that I'm not creating mechanisms to remove event listeners or styles. What if I wanted to extend the extensions and, for example, do something additional when a click occurs.
+This is one way to do it but it's not the most ideal and it lacks sophistication. Forget that I'm not creating mechanisms to remove event listeners or styles. What if I wanted to extend the extensions and, for example, do something additional when a click occurs? Extending extensions could be a bit trickier. This is when it becomes difficult to keep things decoupled, without some pre-planning.
+
+
+
+
 
 
