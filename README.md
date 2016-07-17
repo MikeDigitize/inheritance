@@ -164,7 +164,7 @@ So now via the above I can extend the base class with extensions. But these exte
 // base-class.js
 
 function DomElement(selector) {
-	this.elements = Array.from(document.querySelectorAll(selector));
+  this.elements = Array.from(document.querySelectorAll(selector));
 }
 
 // onclick-class.js
@@ -248,6 +248,7 @@ This is one way to do it but it's not the most ideal, is rather verbose and lack
 ```javascript
 
 // base-class.js
+
 export class DomElement {
   constructor(selector) {
     this.elements = Array.from(document.querySelectorAll(selector));
@@ -285,7 +286,140 @@ h1.onClick(() => console.log('click'));
 
 ```
 
-Ok, so the first thing to note is by aliasing the class name I can preserve it with each extension, which is really nice. I can also preserve my composition pattern. But I can only add one extension at a time which is why there's no add style method in the above.
+Ok, so the first thing to note is by aliasing the class name I can preserve it with each extension, which is really nice. I can also preserve my composition pattern. But I can only add one extension at a time which is why there's no add style method in the above. So how could I include both extension classes? Because currently there is no syntax that supports multiple inheritance in the ES6 class syntax.
+
+```javascript
+
+// onclick-class.js
+
+export class OnClick {	
+    onClick(callback) {
+	onClick.call(this, callback);
+    }
+}
+
+// style-class.js
+
+export class AddStyle {	
+    addStyle(style) {
+	addStyle.call(this, style);
+    }
+}
+
+// base-class.js
+
+import { OnClick } from 'onclick-class';
+import { AddStyle } from 'style-class';
+
+export class DomElement extends OnClick, AddStyle {
+  constructor(selector) {
+    this.elements = Array.from(document.querySelectorAll(selector));
+  }
+}
+
+```
+
+The above comma separated extends syntax doesn't work. But maybe I can manually change that. Extends accepts an expression as well as a function / class which gives me a chance to create a workaround. As I have a go at this I'll show the full contents of my individual files again just to show exactly what is going on.
+
+```javascript
+
+// style-class.js
+
+function addStyle(style, elements) {
+  if(!elements) {
+    elements = this.elements;
+  }
+  if(!Array.isArray(elements)) {
+    elements = [elements];
+  }
+  var key = Object.keys(style)[0];
+  elements.forEach(element => element.style[key] = style[key]);
+}
+
+export class AddStyle {	
+  addStyle(style) {
+    addStyle.call(this, style);
+  }
+}
+
+// onclick-class.js
+
+function onClick(callback, elements) {
+    if(!elements) {
+      elements = this.elements;
+    }
+    if(!Array.isArray(elements)) {
+      elements = [elements];
+    }
+    elements.forEach(element => element.addEventListener('click', callback));
+}
+
+export class OnClick {	
+    onClick(callback) {
+	onClick.call(this, callback);
+    }
+}
+
+// combine-utility.js
+
+export function combine(...constructors) {
+  let combined = function() {};
+  combined.prototype = constructors.reduce(function(proto, constructor) {
+    Object.getOwnPropertyNames(constructor.prototype).forEach(function(key) {
+      if(key !== 'constructor') {
+        proto[key] = constructor.prototype[key];
+      }			
+    });
+    return proto;
+  }, {});
+  return combined;
+}
+
+// base-class.js
+
+import { OnClick } from 'onclick-class';
+import { AddStyle } from 'style-class';
+import { combine } from 'combine-utility';
+
+export class DomElement extends combine(OnClick, AddStyle) {
+  constructor(selector) {
+    this.elements = Array.from(document.querySelectorAll(selector));
+  }
+}
+
+// custom.js
+
+var h1 = new DomElement('h1');
+h1.onClick(() => console.log('click'));
+h1.addStyle({ color : 'red' });
+
+```
+
+Woohoo! Success! I've got individual functions that would work inside or outside of a class. I've managed to create a function that combines the non-constructor prototype properties from the classes and combine them onto a single function which I extend the base class with. As long as the extension classes don't have a constructor this pattern should work just fine. In the example of DOM element modification this pattern works well but I'm sure there will be scenarios in which it doesn't. 
+
+I should also note at this time that I've changed my Gulp step ever since I've been exporting and importing to use Webpack. Here's my build step:
+
+```javascript
+
+gulp.task('js:base', () => {
+    
+    let entry = {};
+    entry['entry'] = 'js/dom-element.js';
+    let config = Object.assign({}, webpackConfigSrc, { entry });
+    
+    return gulp.src('./src/js/dom-element.js')
+        .pipe(plumber())
+        .pipe(webpackStream(config))
+        .pipe(rename('dom-tool.js'))
+        .pipe(gulp.dest(jsDest));
+
+});
+
+```
+
+
+
+
 
 
 
