@@ -211,38 +211,6 @@ So now with a bit of internal testing of arguments I have a series of functions 
 
 ```javascript
 
-// base-class.js
-
-function DomElement(selector) {
-	this.elements = Array.from(document.querySelectorAll(selector));
-}
-
-// onclick-class.js
-
-function addClick(elements, callback) {
-    if(!elements) {
-      elements = this.elements;
-    }
-    if(!Array.isArray(elements)) {
-      elements = [elements];
-    }
-	  elements.forEach(element => element.addEventListener('click', callback));
-}
-
-
-// style-class.js
-
-function addStyle(elements, style) {
-  if(!elements) {
-    elements = this.elements;
-  }
-  if(!Array.isArray(elements)) {
-    elements = [elements];
-  }
-	var key = Object.keys(style)[0];
-  elements.forEach(element => element.style[key] = style[key]);
-}
-
 // custom.js
 
 var DomTool = function(element) {
