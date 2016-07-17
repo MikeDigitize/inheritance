@@ -261,11 +261,11 @@ import { DomElement as DE } from './dom-element';
 
 export class DomElement extends DE {
     constructor(elements) {
-	super(elements);
+	    super(elements);
     }
 	
     onClick(callback) {
-	onClick.call(this, callback);
+	    onClick.call(this, callback);
     }
 }
 
