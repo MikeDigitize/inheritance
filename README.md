@@ -36,7 +36,17 @@ var me = new Gender('Mike', 'male');
 
 ```
 
-So as long as my build process is built in a way that allows me to bundle the base class with extensions I can pick and choose to add whatever functionality I needed. Ok, cool but things to note from this strategy are that the additional functionality requires me to change the name of the base class, I'm limited to a single extension at a time, I have to use the base class within each extension's constructor, it needs the `new` keyword to create instances and it doesn't use any inheritance tools that came with ES5 or ES6.
+So as long as my build process is designed in a way that allows me to bundle the base class with extensions I can pick and choose to add whatever functionality I needed. For example, with Gulp:
+
+```javascript
+gulp.task('js:base-employee', () => {
+    return gulp.src(['./src/js/base-class.js', './src/js/employee-class.js'])
+        .pipe(concat('base-class-employee.js'))
+        .pipe(gulp.dest(jsDest));
+});
+
+```
+Ok, cool but things to note from this strategy are that the additional functionality requires me to change the name of the base class, I'm limited to a single extension at a time, I have to use the base class within each extension's constructor, it needs the `new` keyword to create instances and it doesn't use any inheritance tools that came with ES5 or ES6.
 
 Ok I'll try that again without changing the base class.
 
