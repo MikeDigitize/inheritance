@@ -1,5 +1,5 @@
 # Inheritance
-A proof of concept for a new inheritance pattern in JavaScript
+Experiments with inheritance patterns in JavaScript.
 
 The motivation behind this was I wanted to create a wrapper around an API that needed some love / syntactic sugar. There was lots of stuff that I could do with this API. First, just make it easier and friendlier to use. This would be like a base class - a lightweight convenient wrapper around the API that would let people use it without extra features they didn't need. 
 
@@ -169,7 +169,7 @@ function DomElement(selector) {
 
 // onclick-class.js
 
-function addClick(elements, callback) {
+function addClick(callback, elements) {
   if(!elements) {
     elements = this.elements;
   }
@@ -182,7 +182,7 @@ function addClick(elements, callback) {
 
 // style-class.js
 
-function addStyle(elements, style) {
+function addStyle(style, elements) {
   if(!elements) {
     elements = this.elements;
   }
@@ -196,11 +196,11 @@ function addStyle(elements, style) {
 // custom.js
 
 DomElement.prototype.addClick = function(callback) {
-  addClick.call(this, null, callback);
+  addClick.call(this, callback);
 };
 
 DomElement.prototype.addStyle = function(style) {
-  addStyle.call(this, null, style);
+  addStyle.call(this, style);
 }
 
 var h1 = new DomElement('h1');
@@ -224,14 +224,14 @@ var DomTool = function(element) {
 		  	writable: false, 
 		  	configurable: true, 
 		  	value: function(callback) {
-			    addClick.call(this, null, callback);
+			    addClick.call(this, callback);
 			}
 		},
 	  	addStyle: {
 		    writable: false, 
 		  	configurable: true, 
 		  	value: function(style) {
-			    addStyle.call(this, null, style);
+			    addStyle.call(this, style);
 			}
 		}
 	});
@@ -243,9 +243,49 @@ var h1 = DomTool('h1');
 
 So now I've eliminated the need to use `new` but there's a fair amount of setup required in our custom.js file to compose the functions together. And I'm not using inheritance per se I've created a factory that spits out an object. The instance inherits from DomElement not from DomTool. 
 
-This is one way to do it but it's not the most ideal and it lacks sophistication. Forget that I'm not creating mechanisms to remove event listeners or styles. What if I wanted to extend the extensions and, for example, do something additional when a click occurs? Extending extensions could be a bit trickier. This is when it becomes difficult to keep things decoupled, without some pre-planning.
+This is one way to do it but it's not the most ideal, is rather verbose and lacks sophistication. So could ES6 classes offer any benefits that other methods explored haven't?
 
+```javascript
 
+// base-class.js
+export class DomElement {
+  constructor(selector) {
+    this.elements = Array.from(document.querySelectorAll(selector));
+  }
+}
+
+// onclick-class.js
+
+import { DomElement as DE } from './dom-element';
+
+export class DomElement extends DE {
+    constructor(elements) {
+	super(elements);
+    }
+	
+    onClick(callback) {
+	onClick.call(this, callback);
+    }
+}
+
+function onClick(callback, elements) {
+    if(!elements) {
+      elements = this.elements;
+    }
+    if(!Array.isArray(elements)) {
+      elements = [elements];
+    }
+    elements.forEach(element => element.addEventListener('click', callback));
+}
+
+// custom.js
+
+var h1 = new DomElement('h1');
+h1.onClick(() => console.log('click'));
+
+```
+
+Ok, so the first thing to note is by aliasing the class name I can preserve it with each extension, which is really nice. I can also preserve my composition pattern. But I can only add one extension at a time which is why there's no add style method in the above.
 
 
 
