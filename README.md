@@ -294,7 +294,7 @@ Ok, so the first thing to note is by aliasing the class name I can preserve it w
 
 export class OnClick {	
     onClick(callback) {
-	onClick.call(this, callback);
+	    onClick.call(this, callback);
     }
 }
 
@@ -302,7 +302,7 @@ export class OnClick {
 
 export class AddStyle {	
     addStyle(style) {
-	addStyle.call(this, style);
+	    addStyle.call(this, style);
     }
 }
 
@@ -356,7 +356,7 @@ function onClick(callback, elements) {
 
 export class OnClick {	
     onClick(callback) {
-	onClick.call(this, callback);
+	    onClick.call(this, callback);
     }
 }
 
