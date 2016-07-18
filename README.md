@@ -417,6 +417,52 @@ gulp.task('js:base', () => {
 
 ```
 
+So with this style of writing functions that can be used in isolation but are also tied to a specific API, exporting these as individual classes and a small helper method to combine their prototype properties I can create my own custom class build. Is this a good thing? Yes if I re-use these functions elsewhere, but not really if I don't. So composition is good if my functions can be used as part of multiple classes.
+
+If I wanted to piggy back of other extension classes I can too. If, arbitrarily, I wanted to test for specific data attributes whenever a click occurs I can use the `onClick` method from the instance to build upon.
+
+```html
+<h1 data-test="present">Inheritance</h1>
+
+```
+
+```javascript
+
+// has-data.js
+
+function hasData(data, elements) {
+  if(!elements) {
+    elements = this.elements;
+  }
+  if(!Array.isArray(elements)) {
+    elements = [elements];
+  }
+  return this.elements.reduce((match, element) => {
+    Object.keys(element.dataset).forEach(key => {
+      if(element.dataset[key] === data[key]) {
+        match = true;
+      }
+   });
+   return match;
+  }, { match : false });
+}
+
+export class HasData {
+     hasDataOnClick(data, callback) {
+          this.onClick(() => callback.call(this, hasData.call(this, data)));
+    }
+}
+
+// custom.js
+
+var h1 = new DomElement('h1');
+h1.hasDataOnClick({ test : 'present' }, result => console.log(result));
+
+```
+
+This method will use the previously mentioned onClick method which acts as an addEventListener specifically for clicks, so the callback searching for specific data keys and values will fire on every click and test for their presence on the clicked element. There's no storage of callbacks in the current setup so no ability to remove these event listeners. Allowing their removal is just sensible API design which is pretty straight forward and not worth describing, it's easy enough. So I can register custom click handlers that will fire on every click demonstrated above.
+
+
 
 
 
