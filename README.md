@@ -1,9 +1,9 @@
 # Inheritance
 Experiments with inheritance patterns in JavaScript.
 
-The motivation behind this was I wanted to create a wrapper around an API that needed some love / syntactic sugar. There was lots of stuff that I could do with this API. First, just make it easier and friendlier to use. This would be like a base class - a lightweight convenient wrapper around the API that would let people use it without extra features they didn't need. 
+The motivation behind this was I wanted to create a wrapper around an API that needed some love / syntactic sugar. There was lots of stuff that I could do with this API. First, just make it easier and friendlier to use. This would be like a base class - a lightweight convenient wrapper around the API that would let people use it without the friction of the native API. 
 
-There were other additional features I could build into the base class but I wanted these to be optional, housed in separate files and importable on demand. So I thought I'd investigate how to do this using traditional JavaScript inheritance.
+But there were other additional features I could build into the base class to give it super powers(!) but I wanted these to be optional, housed in separate files and combined with the base class by user choice. So I thought I'd investigate ways in which to do this using traditional JavaScript inheritance.
 
 ```javascript
 // base-class.js
@@ -36,7 +36,7 @@ var me = new Gender('Mike', 'male');
 
 ```
 
-So as long as my build process is designed in a way that allows me to bundle the base class with extensions I can pick and choose to add whatever functionality I needed. For example, with Gulp:
+This way is easy but too simplistic and inflexible but the good news is that as long as my build process is designed in a way that allows me to bundle the base class with extensions I can pick and choose to add whatever functionality I needed an create an instance of Gender or Employee both of which build on the base class of Person. For example, this is about as simple as it gets with Gulp:
 
 ```javascript
 gulp.task('js:base-employee', () => {
@@ -46,9 +46,9 @@ gulp.task('js:base-employee', () => {
 });
 
 ```
-Ok, cool but things to note from this strategy are that the additional functionality requires me to change the name of the base class, I'm limited to a single extension at a time, I have to use the base class within each extension's constructor, it needs the `new` keyword to create instances and it doesn't use any inheritance tools that came with ES5 or ES6.
+Things to note from this strategy are that the added functionality requires me to change the name of the base class, I'm limited to a single extension at a time, I have to use the base class within each extension's constructor which is cute but hacky, it needs the `new` keyword to create instances and it doesn't use any inheritance tools that came with ES5 or ES6.
 
-Ok I'll try that again without changing the base class.
+Ok I'll try again but this time without changing the base class.
 
 ```javascript
 
@@ -78,7 +78,7 @@ me.setGender('male');
 
 ```
 
-Ok so now I'm keeping the base class name intact but now I'm having to create methods on the base class prototype to set additional properties. So is it worth trying something unconventional with the base class?
+Ok so now I'm keeping the base class name intact but I'm having to create methods on the base class prototype to set additional properties. This is fine but can it be improved by trying something a bit unconventional with the base class?
 
 ```javascript
 
@@ -100,7 +100,7 @@ function Employee(occupation) {
 // gender-class.js
 
 function Gender(gender) {
-	this.gender = gender;
+  this.gender = gender;
 }
 
 // custom.js
@@ -112,7 +112,17 @@ var mike = new Person('Mike', [
 
 ```
 
-So in the above the base class is modified to take an additional argument - an array of objects with a constructor property and initialisation property that will internally get set against the base class. But it's not a nice API. It's also inflexible. Maybe I could use `apply` instead of `call` and pass in an array of initialising properties if there's a need for more than one. Still it's far from ideal. Besides, with such arbitrary extensions it's hard to ascertain any practical use for the above so I'll change the base class to something slightly more practical.
+So now I've modified the base class to take an additional argument - an array of objects with a constructor property and initialisation property that will internally get set against the base class. It's essentially just a way to do this multiple times:
+
+```javascript
+
+Person.call(this, name);
+
+```
+
+to copy the internal constructor properties to the instance. And it's not a nice API. It's also inflexible. Maybe I could use `apply` instead of `call` and pass in an array of initialising properties if there's a need for more than one. Still it's far from ideal. 
+
+Also using such trite example functions like Person and Employee (yuck) it's hard to ascertain any practical use for what I'm doing so I'll change the base class to something slightly more practical.
 
 ```javascript
 
@@ -156,7 +166,7 @@ var h1 = new DomTool('h1', [
 
 ```
 
-So now via the above I can extend the base class with extensions. But these extensions all reference the `elements` property from the base class so are useless without the base class. This isn't such a bad thing when designing a specific extensible API. If I were bothered about that I could just use composition instead.
+So now via the above I can extend the base class with extensions. But these extensions all reference `this` and the `elements` property from the base class, so are basically useless without the base class. This isn't necessarily a bad thing but we have the dogma that everything we create should be re-usable so in an attempt to not get frowned upon by the pantheon of JavaScript gods we can try and convet the above to a pattern that uses composition instead.
 
 
 ```javascript
@@ -243,7 +253,7 @@ var h1 = DomTool('h1');
 
 So now I've eliminated the need to use `new` but there's a fair amount of setup required in our custom.js file to compose the functions together. And I'm not using inheritance per se I've created a factory that spits out an object. The instance inherits from DomElement not from DomTool. 
 
-This is one way to do it but it's not the most ideal, is rather verbose and lacks sophistication. So could ES6 classes offer any benefits that other methods explored haven't?
+This is one way to do it but it's not the most ideal and is rather verbose. So could ES6 classes offer any benefits that other methods explored haven't?
 
 ```javascript
 
@@ -286,7 +296,7 @@ h1.onClick(() => console.log('click'));
 
 ```
 
-Ok, so the first thing to note is by aliasing the class name I can preserve it with each extension, which is really nice. I can also preserve my composition pattern. But I can only add one extension at a time which is why there's no add style method in the above. So how could I include both extension classes? Because currently there is no syntax that supports multiple inheritance in the ES6 class syntax.
+Ok, so the first thing to note is by aliasing the class name I can preserve the base class name when I extend it, which is nice. I can also preserve my composition pattern. But I can only add one extension at a time which is why there's no add style method in the above. So how could I include both extension classes? Because currently there is no syntax that supports multiple inheritance in the ES6 class syntax.
 
 ```javascript
 
@@ -395,11 +405,13 @@ h1.addStyle({ color : 'red' });
 
 ```
 
-Woohoo! Success! I've got individual functions that would work inside or outside of a class. I've managed to create a function that combines the non-constructor prototype properties from the classes and combine them onto a single function which I extend the base class with. As long as the extension classes don't have a constructor this pattern should work just fine. In the example of DOM element modification this pattern works well but I'm sure there will be scenarios in which it doesn't. 
+Success! I've got individual functions that would work inside or outside of a class. I've managed to create a function that combines the non-constructor prototype properties from the classes and combine them onto a single function which I extend the base class with. As long as the extension classes don't have a constructor this pattern should work just fine and in the example of adding wrappers around DOM element modification this pattern works well. 
 
 I should also note at this time that I've changed my Gulp step ever since I've been exporting and importing to use Webpack. Here's my build step:
 
 ```javascript
+
+import webpackConfigSrc from './webpack.config.js';
 
 gulp.task('js:base', () => {
     
@@ -417,10 +429,10 @@ gulp.task('js:base', () => {
 
 ```
 
-So with this style of writing functions that can be used in isolation but are also tied to a specific API, exporting these as individual classes and a small helper method to combine their prototype properties I can create my own custom class build. 
+So with this style of writing functions that can be used in isolation but are also tied to a specific API, exporting these wrapped in constructor-less individual classes and with a small helper method to combine their prototype properties I can create my own custom class build. 
 
-Is this a good thing? Yes if I'm going to re-use these functions elsewhere as part of other classes, but not really if I don't. I may as well just make one single class becuase it's not as though all the class properties are copied to the instance, they remain on the class and are looked up via the prototype chain, so I'm not saving loads of memory. So in short composition is good if my functions can be used as part of multiple classes. 
+Is this a good thing? Yes, particularly if I'm going to re-use these functions elsewhere as part of other classes. If I'm not going to re-use them I may as well just make one single class because it's not as though all the properties are copied to the instance, they are just looked up via the prototype chain, so I'm not saving loads of memory by creating a single larger class. So in short composition is good if my functions are re-usable and I am actually going to re-use them. 
 
-Now, to return to my original motivation behind exploring inheritance options - that I wanted to create a progressively expansive API that was left to the user to construct based onthe functionality they required - it would seem that the answer is to firstly create a base API and then a series of expansion functions which are wrapped in tiny classes and whose protptypes could be combined together to extend the base class. It's also a nice bonus if the functions are flexible enough to be used in isolation without the base class.
+Now, to return to my original motivation behind exploring inheritance options - that I wanted to create a progressively expansive API that was left to the user to construct based on the functionality they required - it would seem that the answer is to firstly create a base API and then a series of functions to expand functionality which live in their own individual files. These functions are exported out wrapped in tiny classes, the protptypes of which are combined together to extend the base class. It's also a nice bonus if the functions are flexible enough to be used in isolation without the base class. One nagging thought remains though, in that I'm having to workaround a limitation or what I perceive to be a limitation of no native way to combine prototype properties into a single object. 
 
-So this is the approach I'll take, when it's finished I'll report back with some details on how well it worked. Thanks for reading! Contributions / comments welcomed! 
+But regardless this is the approach I'll take, and when it's finished I'll report back with some details on how well it worked. Thanks for reading! Contributions / comments / corrections to this article are welcomed! 
